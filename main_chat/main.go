@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	go api.StartApi()
+	go persistence.StartPersistenceService()
+	api.StartApi()
 
-	persistence.StartPersistenceService()
 }
