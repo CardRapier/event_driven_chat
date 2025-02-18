@@ -1,11 +1,15 @@
 package chat
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+)
 
-type ChatHandler struct {}
+type ChatHandler struct {
+	chatService *ChatService
+}
 
-func NewChatHandler() *ChatHandler {
-	return &ChatHandler{}
+func NewChatHandler(chatService *ChatService) *ChatHandler {
+	return &ChatHandler{chatService: chatService}
 }
 
 func (ch *ChatHandler) StartRouting(router fiber.Router) {
@@ -14,6 +18,16 @@ func (ch *ChatHandler) StartRouting(router fiber.Router) {
 }
 
 func (ch *ChatHandler) CreateMessage(c *fiber.Ctx) error {
+	var message *ChatMessage
+
+	if err := c.BodyParser(&message); err != nil {
+		return err
+	}
+
+	err := ch.chatService.CreateMessage(message)
+	if err != nil {
+		return err
+	}
 
 	return nil;
 }
