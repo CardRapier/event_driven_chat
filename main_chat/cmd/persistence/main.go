@@ -1,0 +1,5 @@
+package persistence
+
+func StartPersistenceService(){
+
+}
