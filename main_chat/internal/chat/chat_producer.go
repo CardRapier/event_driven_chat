@@ -1,5 +1,5 @@
 package chat
 
 type ChatProducer interface {
-	PublishChatMessage(message *ChatMessage) error
+	PublishChatMessage(chatMessage *ChatMessage) error
 }

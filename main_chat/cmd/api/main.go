@@ -11,7 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gocql/gocql"
 	"github.com/segmentio/kafka-go"
 
 	"github.com/gofiber/fiber/v2"
@@ -29,9 +28,9 @@ type Services struct {
 }
 
 type Dependencies struct {
-	Redpanda *kafka.Writer
-	RedpandaChatProducer chat.RedpandaChatProducer
-	RedisUserRepository user.UserRepository
+	Redpanda             *kafka.Writer
+	RedpandaChatProducer chat.ChatProducer
+	RedisUserRepository  user.UserRepository
 }
 
 func StartApi() {
@@ -54,20 +53,20 @@ func setupRoutes(app *fiber.App, handlers *Handlers) {
 	v1 := api.Group("v1")
 
 	handlers.UserHandler.StartRouting(v1)
-	handlers.UserHandler.StartRouting(v1)
+	handlers.ChatHandler.StartRouting(v1)
 }
 
 func createDependencies(redis *redis.Client, redpanda *kafka.Writer) *Dependencies {
 	return &Dependencies{
-		Redpanda: redpanda,
-		RedpandaChatProducer: *chat.NewRedpandaChatProducer(redpanda),
-		RedisUserRepository: user.NewRedisRepository(redis),
+		Redpanda:             redpanda,
+		RedpandaChatProducer: chat.NewRedpandaChatProducer(redpanda),
+		RedisUserRepository:  user.NewRedisRepository(redis),
 	}
 }
 
 func createServices(repositories *Dependencies) *Services {
 	return &Services{
-		ChatService: chat.NewChatService(&repositories.RedpandaChatProducer),
+		ChatService: chat.NewChatService(repositories.RedpandaChatProducer),
 		UserService: user.NewUserService(repositories.RedisUserRepository),
 	}
 }
@@ -100,34 +99,27 @@ func startRedis() *redis.Client {
 	return redisClient
 }
 
-func startScylla() *gocql.Session {
-	cluster := gocql.NewCluster("127.0.0.1") // Replace with your Scylla/Cassandra host(s)
-	cluster.Keyspace = "mandcondor_chat"       // Replace with your keyspace
-	cluster.Consistency = gocql.Quorum
-	// Optionally, adjust timeouts and other settings:
-	cluster.Timeout = 10 * time.Second
-
-	// Create a session. You may wish to handle errors differently in production.
-	session, err := cluster.CreateSession()
-	if err != nil {
-		log.Fatalf("Failed to connect to ScyllaDB: %v", err)
-	}
-
-	return session
-}
-
-func startRedPanda() *kafka.Writer {
+func tryRedpandaConn() error {
 	conn, err := kafka.Dial("tcp", config.Envs.RedpandaUrl)
 	if err != nil {
-		log.Fatalf("failed to connect to Redpanda broker: %v", err)
+		return err
 	}
 	defer conn.Close()
 
 	log.Println("Connected successfully to Redpanda broker!")
+	return nil
+}
+
+func startRedPanda() *kafka.Writer {
+	err := tryRedpandaConn()
+
+	if err != nil {
+		log.Fatalf("failed to connect to Redpanda broker: %v", err)
+	}
 
 	writer := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{config.Envs.RedpandaUrl}, // Redpanda broker(s)
-		Topic:    "chat-messages",
+		Brokers: []string{config.Envs.RedpandaUrl}, // Redpanda broker(s)
+		Topic:   "chat-messages",
 		// Balancer: &kafka.Hash{}, // Use Hash to ensure messages with the same key go to the same partition.x
 	})
 

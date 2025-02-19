@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -13,7 +14,9 @@ type RedpandaChatProducer struct {
 }
 
 func NewRedpandaChatProducer(redpanda *kafka.Writer) *RedpandaChatProducer {
-	return &RedpandaChatProducer{}
+	return &RedpandaChatProducer{
+		redpanda: redpanda,
+	}
 }
 
 func (rcp *RedpandaChatProducer) PublishChatMessage(chatMessage *ChatMessage) error {
@@ -22,16 +25,20 @@ func (rcp *RedpandaChatProducer) PublishChatMessage(chatMessage *ChatMessage) er
 	if err != nil {
 		return fmt.Errorf("failed to marshal chat message: %w", err)
 	}
+
 	err = rcp.redpanda.WriteMessages(context.Background(),
 		kafka.Message{
 			Key:   []byte(fmt.Sprintf("user-%s", chatMessage.UserId.String())),
 			Value: messageBytes,
+			Partition: 0,
 		},
 	)
 
 	if err != nil {
 		return err
 	}
+
+	log.Info("Message published successfully")
 
 	return nil
 }
