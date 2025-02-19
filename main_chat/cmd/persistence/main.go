@@ -1,14 +1,20 @@
 package persistence
 
 import (
+	"chat/internal/chat"
+	"chat/internal/config"
 	"log"
 	"time"
 
 	"github.com/gocql/gocql"
+	"github.com/segmentio/kafka-go"
 )
 
-func StartPersistenceService(){
+func StartPersistenceService() {
+	redpanda := startRedpandaReader()
+	redpandaChatConsumer := chat.NewRedpandaChatConsumer(redpanda)
 
+	go redpandaChatConsumer.ConsumeChatMessages()
 }
 
 func startScylla() *gocql.Session {
@@ -25,4 +31,23 @@ func startScylla() *gocql.Session {
 	}
 
 	return session
+}
+
+func startRedpandaReader() *kafka.Reader {
+	brokerAddress := config.Envs.RedpandaUrl // Update with your Redpanda broker address
+	topic := "chat-messages"
+	groupID := "persistence-group"
+
+	// Create a new reader with the topic and the broker address
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  []string{brokerAddress},
+		Topic:    topic,
+		GroupID:  groupID, // Set the GroupID here
+		MinBytes: 10e3,    // 10KB
+		MaxBytes: 1e6,     // 1MB
+	})
+
+	log.Println("Consumer - Connected")
+
+	return reader
 }
