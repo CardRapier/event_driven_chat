@@ -35,7 +35,7 @@ func startScylla() *gocql.Session {
 
 func startRedpandaReader() *kafka.Reader {
 	brokerAddress := config.Envs.RedpandaUrl // Update with your Redpanda broker address
-	topic := "chat-messages"
+	topic := "chat"
 	groupID := "persistence-group"
 
 	// Create a new reader with the topic and the broker address

@@ -119,7 +119,7 @@ func startRedPanda() *kafka.Writer {
 
 	writer := kafka.NewWriter(kafka.WriterConfig{
 		Brokers: []string{config.Envs.RedpandaUrl}, // Redpanda broker(s)
-		Topic:   "chat-messages",
+		Topic:   "chat",
 		// Balancer: &kafka.Hash{}, // Use Hash to ensure messages with the same key go to the same partition.x
 	})
 
