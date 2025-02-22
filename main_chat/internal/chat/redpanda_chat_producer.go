@@ -28,7 +28,7 @@ func (rcp *RedpandaChatProducer) PublishChatMessage(chatMessage *ChatMessage) er
 
 	err = rcp.redpanda.WriteMessages(context.Background(),
 		kafka.Message{
-			Key:   []byte(fmt.Sprintf("user-%s", chatMessage.UserId.String())),
+			Key:   []byte("chat-message"),
 			Value: messageBytes,
 			Partition: 0,
 		},
