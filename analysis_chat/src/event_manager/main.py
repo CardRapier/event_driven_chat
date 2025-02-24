@@ -1,6 +1,8 @@
 import asyncio
 import os
 
+from .redpanda_producer import RedpandaProducer
+
 from ..pub_sub.channels import Channels
 from ..pub_sub.nats_subscriber import NatsSubscriber
 from ..pub_sub.nats_publisher import NatsPublisher
@@ -17,12 +19,9 @@ async def main():
     await nats_pub.connect()
     # Instantiate the Redpanda consumer, injecting the NATS publisher
     consumer = RedpandaConsumer(nats_pub)
-    producer = None
+    producer = RedpandaProducer()
 
-    def test(data):
-        print(data)
-
-    await nats_sub.subscribe(Channels.SENTIMENT_MESSAGE, test)
+    await nats_sub.subscribe(Channels.SENTIMENT_MESSAGE, producer.publish)
 
     try:
         await consumer.run()
