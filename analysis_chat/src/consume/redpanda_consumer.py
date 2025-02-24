@@ -1,6 +1,7 @@
 import asyncio
 from confluent_kafka import Consumer  # type: ignore
 from src.config.redpanda import redpanda_consumer_config
+from src.pub_sub.channels import Channels
 
 
 class RedpandaConsumer:
@@ -30,7 +31,7 @@ class RedpandaConsumer:
 
                 # Publish to NATS using the injected publisher
                 future = asyncio.run_coroutine_threadsafe(
-                    self.nats_publisher.publish("analysis-message", message_data),
+                    self.nats_publisher.publish(Channels.CHAT_MESSAGE, message_data),
                     self.nats_publisher.loop,
                 )
                 try:

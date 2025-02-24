@@ -2,6 +2,7 @@ package chat
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 type ChatHandler struct {
@@ -18,13 +19,20 @@ func (ch *ChatHandler) StartRouting(router fiber.Router) {
 }
 
 func (ch *ChatHandler) CreateMessage(c *fiber.Ctx) error {
-	var message *ChatMessage
+	var message *CreateChatMessage
 
 	if err := c.BodyParser(&message); err != nil {
 		return err
 	}
 
-	err := ch.chatService.CreateMessage(message)
+	createMessage := &ChatMessage{
+		UserId: message.UserId,
+		Message: message.Message,
+		Timestamp: message.Timestamp,
+		MessageId: uuid.New(),
+	}
+
+	err := ch.chatService.CreateMessage(createMessage)
 	if err != nil {
 		return err
 	}

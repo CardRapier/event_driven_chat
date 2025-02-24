@@ -13,6 +13,7 @@ class NatsPublisher:
 
     async def publish(self, subject, message):
         await self.nc.publish(subject, message.encode("utf-8"))
+        await self.nc.flush()
         print(f"Published message to subject '{subject}': {message}")
 
     async def close(self):
