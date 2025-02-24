@@ -2,8 +2,7 @@ from nats.aio.client import Client as NATS
 
 
 class NatsSubscriber:
-    def __init__(self, loop, server_url="nats://localhost:4222"):
-        self.loop = loop
+    def __init__(self, server_url="nats://localhost:4222"):
         self.server_url = server_url
         self.nc = NATS()
         self.cbs = {}

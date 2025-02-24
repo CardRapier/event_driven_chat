@@ -1,35 +1,36 @@
 import asyncio
 import os
-import threading
+
+from ..pub_sub.channels import Channels
+from ..pub_sub.nats_subscriber import NatsSubscriber
 from ..pub_sub.nats_publisher import NatsPublisher
 from .redpanda_consumer import RedpandaConsumer
 
 
-def main():
-    # Create and set the event loop
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+async def main():
+    nats_uri = os.getenv("NATS_URL", "localhost:4222")
+    nats_sub = NatsSubscriber(server_url=nats_uri)
+    await nats_sub.connect()
 
     # Instantiate and connect the NATS publisher
-    nats_uri = os.getenv("NATS_URL", "localhost:4222")
-    nats_pub = NatsPublisher(loop, server_url=nats_uri)
-    loop.run_until_complete(nats_pub.connect())
-
-    loop_thread = threading.Thread(target=loop.run_forever, daemon=True)
-    loop_thread.start()
+    nats_pub = NatsPublisher(server_url=nats_uri)
+    await nats_pub.connect()
     # Instantiate the Redpanda consumer, injecting the NATS publisher
     consumer = RedpandaConsumer(nats_pub)
+    producer = None
+
+    def test(data):
+        print(data)
+
+    await nats_sub.subscribe(Channels.SENTIMENT_MESSAGE, test)
 
     try:
-        consumer.run()
+        await consumer.run()
     except KeyboardInterrupt:
         pass
     finally:
-        loop.call_soon_threadsafe(loop.stop)
-        loop_thread.join()
-        loop.run_until_complete(nats_pub.close())
-        loop.close()
+        await nats_pub.close()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

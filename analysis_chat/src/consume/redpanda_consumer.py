@@ -16,10 +16,10 @@ class RedpandaConsumer:
         # redpanda_consumer_config.subscribe should be a list of topics
         self.consumer.subscribe(redpanda_consumer_config.subscribe)
 
-    def run(self):
+    async def run(self):
         try:
             while True:
-                msg = self.consumer.poll(timeout=1.0)
+                msg = await asyncio.to_thread(self.consumer.poll, 1.0)
                 if msg is None:
                     continue
                 if msg.error():
@@ -29,14 +29,11 @@ class RedpandaConsumer:
                 message_data = msg.value().decode("utf-8")
                 print(f"Received message from Redpanda: {message_data}")
 
-                # Publish to NATS using the injected publisher
-                future = asyncio.run_coroutine_threadsafe(
-                    self.nats_publisher.publish(Channels.CHAT_MESSAGE, message_data),
-                    self.nats_publisher.loop,
-                )
                 try:
-                    # Wait for the publishing coroutine to finish
-                    future.result(timeout=5)
+                    # Publish to NATS using the injected publisher
+                    await self.nats_publisher.publish(
+                        Channels.CHAT_MESSAGE, message_data
+                    )
                 except Exception as e:
                     print("Error publishing to NATS:", e)
         except KeyboardInterrupt:

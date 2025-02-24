@@ -14,34 +14,31 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def main():
+async def main():
     # Create and set the event loop
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
 
     nats_uri = os.getenv("NATS_URL", "localhost:4222")
-    nats_sub = NatsSubscriber(loop, server_url=nats_uri)
-    loop.run_until_complete(nats_sub.connect())
+    nats_sub = NatsSubscriber(server_url=nats_uri)
+    await nats_sub.connect()
 
     analysis = Analysis()
-    nats_pub = NatsPublisher(loop, server_url=nats_uri)
-    loop.run_until_complete(nats_pub.connect())
+    nats_pub = NatsPublisher(server_url=nats_uri)
+    await nats_pub.connect()
 
     manager = Manager(publisher=nats_pub, analysis=analysis)
 
-    loop.run_until_complete(
-        nats_sub.subscribe(Channels.CHAT_MESSAGE, manager.manage_message)
-    )
+    await nats_sub.subscribe(Channels.CHAT_MESSAGE, manager.manage_message)
 
     # Keep the event loop running to listen for incoming messages
+    stop_event = asyncio.Event()
     try:
-        loop.run_forever()
+        await stop_event.wait()
     except KeyboardInterrupt:
         print("Shutting down...")
     finally:
-        loop.run_until_complete(nats_sub.close())
-        loop.close()
+        await nats_sub.close()
+        await nats_pub.close()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
