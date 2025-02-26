@@ -1,15 +1,15 @@
 import asyncio
 import os
 
-from src.pub_sub.nats_publisher import NatsPublisher
+from analysis_chat.src.analysis.main import Analysis
+from analysis_chat.src.pub_sub.channels import Channels
+from analysis_chat.src.pub_sub.nats_publisher import NatsPublisher
+from analysis_chat.src.chat_processor.manager import Manager
 
-from ..analysis.main import Analysis
-from .manager import Manager
-
-from ..pub_sub.channels import Channels
-from ..pub_sub.nats_subscriber import NatsSubscriber
 
 from dotenv import load_dotenv
+
+from analysis_chat.src.pub_sub.nats_subscriber import NatsSubscriber
 
 load_dotenv()
 

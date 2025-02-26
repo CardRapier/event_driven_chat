@@ -1,5 +1,7 @@
 from nats.aio.client import Client as NATS
 
+from analysis_chat.src.config.logging import logger
+
 
 class NatsSubscriber:
     def __init__(self, server_url="nats://localhost:4222"):
@@ -9,18 +11,18 @@ class NatsSubscriber:
 
     async def connect(self):
         await self.nc.connect(self.server_url)
-        print("Connected to NATS")
+        logger.info("Connected to NATS")
 
     async def subscribe(self, subject, cb):
         self.cbs[subject] = cb
         await self.nc.subscribe(subject, cb=self.message_handler)
-        print(f"Subscribe to subject '{subject}'")
+        logger.info(f"Subscribe to subject '{subject}'")
 
     async def message_handler(self, msg):
-        subject=msg.subject
+        subject = msg.subject
         cb = self.cbs[subject]
         data = msg.data.decode("utf-8")
-        print(f"Received a message on '{subject}': {data}")
+        logger.info(f"Received a message on '{subject}': {data}")
         await cb(msg)
 
     async def close(self):

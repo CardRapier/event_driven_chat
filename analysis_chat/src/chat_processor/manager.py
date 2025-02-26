@@ -1,8 +1,9 @@
-from src.pub_sub.channels import Channels
-from src.pub_sub.nats_publisher import NatsPublisher
-from src.events import Events
-from src.analysis.main import Analysis
 import json
+
+from analysis_chat.src.analysis.main import Analysis
+from analysis_chat.src.events import Events
+from analysis_chat.src.pub_sub.channels import Channels
+from analysis_chat.src.pub_sub.nats_publisher import NatsPublisher
 
 class Manager:
     def __init__(self, publisher: NatsPublisher, analysis: Analysis):

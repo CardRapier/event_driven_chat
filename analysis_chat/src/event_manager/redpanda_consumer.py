@@ -1,11 +1,14 @@
 import asyncio
+from analysis_chat.src.config.logging import logger
+from typing import Any, Optional
 from confluent_kafka import Consumer  # type: ignore
-from src.config.redpanda import redpanda_consumer_config
-from src.pub_sub.channels import Channels
-
+from analysis_chat.src.events import Events
+from analysis_chat.src.pub_sub.nats_publisher import NatsPublisher
+from analysis_chat.src.config.redpanda import redpanda_consumer_config
+from analysis_chat.src.pub_sub.channels import Channels
 
 class RedpandaConsumer:
-    def __init__(self, nats_publisher: object):
+    def __init__(self, nats_publisher: NatsPublisher):
         self.nats_publisher = nats_publisher
         config = {
             "bootstrap.servers": redpanda_consumer_config.redpanda_url,
@@ -16,18 +19,24 @@ class RedpandaConsumer:
         # redpanda_consumer_config.subscribe should be a list of topics
         self.consumer.subscribe(redpanda_consumer_config.subscribe)
 
-    async def run(self):
+    async def run(self) -> None:
         try:
             while True:
-                msg = await asyncio.to_thread(self.consumer.poll, 1.0)
+                msg: Optional[Any] = await asyncio.to_thread(self.consumer.poll, 1.0)
                 if msg is None:
                     continue
                 if msg.error():
-                    print(f"Consumer error: {msg.error()}")
+                    logger.error(f"Consumer error: {msg.error()}")
                     continue
 
-                message_data = msg.value().decode("utf-8")
-                print(f"Received message from Redpanda: {message_data}")
+                # Check if the message key exists and decode it.
+                key_bytes: Optional[bytes] = msg.key()
+                key: str = key_bytes.decode("utf-8") if key_bytes is not None else ""
+                if key != Events.CHAT_MESSAGE:
+                    continue
+
+                message_data: str = msg.value().decode("utf-8")
+                logger.info(f"Received message from Redpanda: {message_data}")
 
                 try:
                     # Publish to NATS using the injected publisher
@@ -35,8 +44,8 @@ class RedpandaConsumer:
                         Channels.CHAT_MESSAGE, message_data
                     )
                 except Exception as e:
-                    print("Error publishing to NATS:", e)
+                    logger.error("Error publishing to NATS:", e)
         except KeyboardInterrupt:
-            print("Shutting down consumer...")
+            logger.warning("Shutting down consumer...")
         finally:
             self.consumer.close()

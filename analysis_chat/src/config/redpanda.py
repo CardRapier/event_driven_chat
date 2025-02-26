@@ -4,8 +4,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-print(f"Redpanda URI: {os.getenv("REDPANDA_URL")}")
-
 class RedPandaConsumerConfig:
     redpanda_url: str
 
