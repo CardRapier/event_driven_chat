@@ -28,7 +28,9 @@ func (rcc *RedpandaChatConsumer) ConsumeChatMessages() {
 			log.Printf("failed to read message: %v", err)
 			break
 		}
-		fmt.Printf("Consumer - Received: %s\n", string(m.Value))
+		if string(m.Key) == "chat_message" {
+			fmt.Printf("Consumer - Received: %s\n", string(m.Value))
+		}
 
 		// Commit the offset after processing the message
 		if err := rcc.redpanda.CommitMessages(context.Background(), m); err != nil {
