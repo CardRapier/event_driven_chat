@@ -9,9 +9,22 @@
             "program": "${workspaceFolder}/main_chat/main.go",
         },
         {
-            "name": "🚀 Py Consumer Debug",
+            "name": "🗣️ Chat processor",
             "type": "debugpy",
             "request": "launch",
+            "module": "analysis_chat.src.chat_processor.main",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "🎫 Event manager",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "analysis_chat.src.event_manager.main",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
         }
     ]
 }
