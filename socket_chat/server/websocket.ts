@@ -1,3 +1,5 @@
+import { ChatMessage, ChatSentiment } from "./../types.ts";
+
 import { Server } from "socket.io";
 import http from "http";
 
@@ -38,5 +40,13 @@ export default class WebsocketIO {
 				console.log("Client disconnected");
 			});
 		});
+	}
+
+	public emitNewMessage(chatMessage: ChatMessage) {
+		this.io.emit("chat_message", chatMessage);
+	}
+
+	public emitMessageSentiment(chatSentiment: ChatSentiment) {
+		this.io.emit("sentiment_message", chatSentiment);
 	}
 }

@@ -1,4 +1,6 @@
-import WebsocketIO from "../server/websocket";
+import { ChatMessage, ChatSentiment, SentimentAnalysis } from "../types.ts";
+
+import WebsocketIO from "../server/websocket.ts";
 import kafkajs from "kafkajs";
 
 export default class Consumer {
@@ -37,13 +39,27 @@ export default class Consumer {
 				message,
 			}: kafkajs.EachMessagePayload) => {
 				const key: string | null = message.key ? message.key.toString() : null;
-				const value: string | null = message.value
+				let value: string | null = message.value
 					? message.value.toString()
 					: null;
 
 				console.log(`Received message: topic=${topic}, partition=${partition}`);
 				console.log(`Key: ${key}`);
 				console.log(`Value: ${value}`);
+
+				if (!value) {
+					return;
+				}
+
+				value = JSON.parse(value);
+
+				if (key === "chat_message") {
+					const chatMessage = ChatMessage.fromJSON(value);
+					this.socket.emitNewMessage(chatMessage);
+				} else if (key === "sentiment_message") {
+					const chatSentiment = ChatSentiment.fromJSON(value);
+					this.socket.emitMessageSentiment(chatSentiment);
+				}
 			},
 		});
 	}
